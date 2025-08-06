@@ -84,10 +84,10 @@
     <p><strong>Publication DD:</strong> £<span id="publicationDD"></span></p>
     <p><strong>Weeks Charged:</strong> <span id="weeksCharged"></span></p>
     <h4>Payment Templates</h4>
-    <p><strong>First Tuition Payment:</strong> Month - <span id="templateWeeks"></span> Weeks - <span id="templateName1"></span> - MES - £<span id="templateX2"></span> - discounted</p>
-    <p><strong>First Content Payment:</strong> Course Deposit - Book Payment - £<span id="templateX3"></span> - MES - discounted</p>
-    <p><strong>Tuition Subscription:</strong> 4 weeks Rolling - £<span id="templateX4"></span> - <span id="templateName2"></span> - MES</p>
-    <p><strong>Content Subscription:</strong> 4 weeks Rolling - £<span id="templateX5"></span> - Access - <span id="templateName3"></span> - MES</p>
+    <p><strong>First Tuition Payment:</strong> <span id="templateTuition1"></span></p>
+    <p><strong>First Content Payment:</strong> <span id="templateContent1"></span></p>
+    <p><strong>Tuition Subscription:</strong> <span id="templateSub1"></span></p>
+    <p><strong>Content Subscription:</strong> <span id="templateSub2"></span></p>
   </div>
 
   <script>
@@ -143,23 +143,36 @@
       const tuitionDD = monthlyFee * 0.6;
       const publicationDD = monthlyFee * 0.4;
 
+      const templateTuition1 = `Month - ${weeksCharged.size} Weeks - ${studentName} - ${yearGroup} - MES - £${tuitionOneOff.toFixed(2)} - discounted`;
+      const templateContent1 = `Course Deposit - Book Payment - £${bookFee.toFixed(2)} - MES - discounted`;
+      const templateSub1 = `4 weeks Rolling - £${tuitionDD.toFixed(2)} - ${studentName} - ${yearGroup} - MES`;
+      const templateSub2 = `4 weeks Rolling - £${publicationDD.toFixed(2)} - Access - ${studentName} - ${yearGroup} - MES`;
+
       document.getElementById('tuitionOneOff').innerText = tuitionOneOff.toFixed(2);
       document.getElementById('publicationOneOff').innerText = bookFee.toFixed(2);
       document.getElementById('tuitionDD').innerText = tuitionDD.toFixed(2);
       document.getElementById('publicationDD').innerText = publicationDD.toFixed(2);
       document.getElementById('weeksCharged').innerText = weeksCharged.size;
 
-      document.getElementById('templateWeeks').innerText = weeksCharged.size;
-      document.getElementById('templateX2').innerText = tuitionOneOff.toFixed(2);
-      document.getElementById('templateX3').innerText = bookFee.toFixed(2);
-      document.getElementById('templateX4').innerText = tuitionDD.toFixed(2);
-      document.getElementById('templateX5').innerText = publicationDD.toFixed(2);
-
-      document.getElementById('templateName1').innerText = studentName + " - " + yearGroup;
-      document.getElementById('templateName2').innerText = studentName + " - " + yearGroup;
-      document.getElementById('templateName3').innerText = studentName + " - " + yearGroup;
+      document.getElementById('templateTuition1').innerText = templateTuition1;
+      document.getElementById('templateContent1').innerText = templateContent1;
+      document.getElementById('templateSub1').innerText = templateSub1;
+      document.getElementById('templateSub2').innerText = templateSub2;
 
       document.getElementById('results').style.display = 'block';
+
+      // Send data back to Jotform
+      JFCustomWidget.sendData({
+        tuitionOneOff: tuitionOneOff.toFixed(2),
+        publicationOneOff: bookFee.toFixed(2),
+        tuitionDD: tuitionDD.toFixed(2),
+        publicationDD: publicationDD.toFixed(2),
+        weeksCharged: weeksCharged.size,
+        firstTuitionPayment: templateTuition1,
+        firstContentPayment: templateContent1,
+        tuitionSubscription: templateSub1,
+        contentSubscription: templateSub2
+      });
     }
   </script>
 </body>
