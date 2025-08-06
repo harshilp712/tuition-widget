@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Tuition Widget</title>
+  <script src="https://cdn.jotfor.ms/widgets/main.js"></script>
+</head>
+<body>
+  <script>
+    JFCustomWidget.subscribe("ready", function () {
+      JFCustomWidget.setHeight(100); // Set small height, no UI needed
+    });
+
+    JFCustomWidget.subscribe("submit", function () {
+      // 1. Get input values from the widget’s properties
+      const props = JFCustomWidget.getWidgetSettings();
+      const startDate = new Date(props.startDate);
+      const monthlyFee = parseFloat(props.monthlyFee);
+      const bookFee = parseFloat(props.bookFee);
+      const saturdayHours = parseFloat(props.saturdayHours);
+      const sundayHours = parseFloat(props.sundayHours);
+      const wednesdayHours = parseFloat(props.wednesdayHours);
+      const selectedDay = props.selectedDay;
+      const studentName = props.studentName;
+      const yearGroup = props.yearGroup;
+
+      let totalWeeklyHours = 0;
+      if (selectedDay === '6') totalWeeklyHours = saturdayHours;
+      else if (selectedDay === '0') totalWeeklyHours = sundayHours;
+      else if (selectedDay === '3') totalWeeklyHours = wednesdayHours;
+      else if (selectedDay === 'weekend') totalWeeklyHours = saturdayHours + sundayHours;
+      else if (selectedDay === 'all') totalWeeklyHours = saturdayHours + sundayHours + wednesdayHours;
+
+      const hourlyRate = (monthlyFee / (totalWeeklyHours * 4));
+
+      const year = startDate.getFullYear();
+      const month = startDate.getMonth();
+      const day = startDate.getDate();
+      const totalDays = new Date(year, month + 1, 0).getDate();
+
+      let tuitionOneOff = 0;
+      let weeksCharged = new Set();
+
+      for (let d = day; d <= totalDays; d++) {
+        const current = new Date(year, month, d);
+        const week = current.getDate() - current.getDay();
+        if (selectedDay === '6' && current.getDay() === 6) {
+          tuitionOneOff += saturdayHours * hourlyRate;
+          weeksCharged.add(week);
+        } else if (selectedDay === '0' && current.getDay() === 0) {
+          tuitionOneOff += sundayHours * hourlyRate;
+          weeksCharged.add(week);
+        } else if (selectedDay === '3' && current.getDay() === 3) {
+          tuitionOneOff += wednesdayHours * hourlyRate;
+          weeksCharged.add(week);
+        } else if (selectedDay === 'weekend') {
+          if (current.getDay() === 6) { tuitionOneOff += saturdayHours * hourlyRate; weeksCharged.add(week); }
+          if (current.getDay() === 0) { tuitionOneOff += sundayHours * hourlyRate; weeksCharged.add(week); }
+        } else if (selectedDay === 'all') {
+          if (current.getDay() === 6) { tuitionOneOff += saturdayHours * hourlyRate; weeksCharged.add(week); }
+          if (current.getDay() === 0) { tuitionOneOff += sundayHours * hourlyRate; weeksCharged.add(week); }
+          if (current.getDay() === 3) { tuitionOneOff += wednesdayHours * hourlyRate; weeksCharged.add(week); }
+        }
+      }
+
+      const tuitionDD = monthlyFee * 0.6;
+      const publicationDD = monthlyFee * 0.4;
+
+      // 2. Send data back to Jotform
+      JFCustomWidget.sendData({
+        tuitionOneOff: tuitionOneOff.toFixed(2),
+        publicationOneOff: bookFee.toFixed(2),
+        tuitionDD: tuitionDD.toFixed(2),
+        publicationDD: publicationDD.toFixed(2),
+        weeksCharged: weeksCharged.size,
+        studentName,
+        yearGroup
+      });
+    });
+  </script>
+</body>
+</html>
