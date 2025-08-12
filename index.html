@@ -15,6 +15,7 @@
     .checkbox-group label { font-weight: normal; display: inline-block; margin-right: 15px; }
     button { background: #2c3e50; color: #fff; border: 0; cursor: pointer; }
     .results { margin-top: 12px; padding: 10px; background: #f5f7f9; border: 1px solid #e3e7eb; border-radius: 6px; }
+    .hidden { display: none; }
   </style>
 </head>
 <body>
@@ -23,23 +24,29 @@
   <label for="startDate">Start Date</label>
   <input type="date" id="startDate" required>
 
-  <label for="monthlyFee">Monthly Fee (£)</label>
+  <label for="monthlyFee">Total Monthly Fee (Tuition Cost Of All Kids) (£)</label>
   <input type="number" id="monthlyFee" min="0" step="0.01" value="100" required>
 
-  <label for="saturdayHours">Saturday Hours</label>
-  <input type="number" id="saturdayHours" min="0" step="0.1" value="2" required>
-
-  <label for="sundayHours">Sunday Hours</label>
-  <input type="number" id="sundayHours" min="0" step="0.1" value="1" required>
-
-  <label for="wednesdayHours">Wednesday Hours</label>
-  <input type="number" id="wednesdayHours" min="0" step="0.1" value="1.5" required>
-
   <label>Select Tuition Days</label>
-  <div class="checkbox-group">
+  <div class="checkbox-group" id="dayCheckboxes">
     <label><input type="checkbox" value="6" class="dayCheckbox"> Saturday</label>
     <label><input type="checkbox" value="0" class="dayCheckbox"> Sunday</label>
     <label><input type="checkbox" value="3" class="dayCheckbox"> Wednesday</label>
+  </div>
+
+  <div id="satHoursWrap" class="hidden">
+    <label for="saturdayHours">Saturday Hours</label>
+    <input type="number" id="saturdayHours" min="0" step="0.1" value="2">
+  </div>
+
+  <div id="sunHoursWrap" class="hidden">
+    <label for="sundayHours">Sunday Hours</label>
+    <input type="number" id="sundayHours" min="0" step="0.1" value="1">
+  </div>
+
+  <div id="wedHoursWrap" class="hidden">
+    <label for="wednesdayHours">Wednesday Hours</label>
+    <input type="number" id="wednesdayHours" min="0" step="0.1" value="1.5">
   </div>
 
   <button id="calcBtn">Calculate</button>
@@ -50,6 +57,33 @@
   </div>
 
   <script>
+    function updateHoursVisibility() {
+      const satChecked = document.querySelector('.dayCheckbox[value="6"]').checked;
+      const sunChecked = document.querySelector('.dayCheckbox[value="0"]').checked;
+      const wedChecked = document.querySelector('.dayCheckbox[value="3"]').checked;
+
+      toggleWrap('satHoursWrap', 'saturdayHours', satChecked);
+      toggleWrap('sunHoursWrap', 'sundayHours', sunChecked);
+      toggleWrap('wedHoursWrap', 'wednesdayHours', wedChecked);
+    }
+
+    function toggleWrap(wrapId, inputId, show) {
+      const wrap = document.getElementById(wrapId);
+      const input = document.getElementById(inputId);
+      if (!wrap || !input) return;
+      if (show) {
+        wrap.classList.remove('hidden');
+        input.setAttribute('required', 'required');
+      } else {
+        wrap.classList.add('hidden');
+        input.removeAttribute('required');
+      }
+    }
+
+    function getSelectedDays() {
+      return Array.from(document.querySelectorAll('.dayCheckbox:checked')).map(cb => cb.value);
+    }
+
     function calcTuitionOneOff() {
       const startDateVal = document.getElementById('startDate').value;
       const monthlyFee = parseFloat(document.getElementById('monthlyFee').value || 0);
@@ -57,22 +91,20 @@
       const sundayHours = parseFloat(document.getElementById('sundayHours').value || 0);
       const wednesdayHours = parseFloat(document.getElementById('wednesdayHours').value || 0);
 
-      // Get selected days from checkboxes
-      const selectedDays = Array.from(document.querySelectorAll('.dayCheckbox:checked'))
-        .map(cb => cb.value);
+      const selectedDays = getSelectedDays();
 
       if (!startDateVal || !isFinite(monthlyFee) || selectedDays.length === 0) {
-        alert("Please enter valid details and select at least one day.");
+        alert('Please enter valid details and select at least one day.');
         return;
       }
 
       const startDate = new Date(startDateVal);
 
-      // Calculate total weekly hours
+      // Total weekly hours only from selected days
       let totalWeeklyHours = 0;
-      if (selectedDays.includes("6")) totalWeeklyHours += saturdayHours;
-      if (selectedDays.includes("0")) totalWeeklyHours += sundayHours;
-      if (selectedDays.includes("3")) totalWeeklyHours += wednesdayHours;
+      if (selectedDays.includes('6')) totalWeeklyHours += saturdayHours;
+      if (selectedDays.includes('0')) totalWeeklyHours += sundayHours;
+      if (selectedDays.includes('3')) totalWeeklyHours += wednesdayHours;
 
       if (totalWeeklyHours <= 0) {
         alert('Total weekly hours is 0. Please check your hours and day selection.');
@@ -92,7 +124,7 @@
 
       for (let d = day; d <= daysInMonth; d++) {
         const current = new Date(year, month, d);
-        const weekKey = current.getFullYear() + '-' + current.getMonth() + '-' + Math.floor((current.getDate() - 1) / 7);
+        const weekKey = `${current.getFullYear()}-${current.getMonth()}-${Math.floor((current.getDate() - 1) / 7)}`;
 
         if (selectedDays.includes(current.getDay().toString())) {
           if (current.getDay() === 6) tuitionOneOff += saturdayHours * hourlyRate;
@@ -116,7 +148,10 @@
       }
     }
 
+    // Wire up listeners
     document.getElementById('calcBtn').addEventListener('click', calcTuitionOneOff);
+    document.getElementById('dayCheckboxes').addEventListener('change', updateHoursVisibility);
+    document.addEventListener('DOMContentLoaded', updateHoursVisibility);
   </script>
 </body>
 </html>
