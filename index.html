@@ -2,15 +2,17 @@
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>Tuition One-Off Fee (Minimal)</title>
+  <title>Tuition One-Off Fee (Checkbox Days)</title>
   <script src="https://cdn.jotfor.ms/widgets/main.js"></script>
   <style>
     body { font-family: Arial, sans-serif; padding: 10px; }
     label { font-weight: bold; margin-top: 10px; display: block; }
-    input, select, button {
+    input[type="number"], input[type="date"], button {
       width: 100%; padding: 8px; margin: 5px 0 10px 0;
       border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box;
     }
+    .checkbox-group { margin-bottom: 10px; }
+    .checkbox-group label { font-weight: normal; display: inline-block; margin-right: 15px; }
     button { background: #2c3e50; color: #fff; border: 0; cursor: pointer; }
     .results { margin-top: 12px; padding: 10px; background: #f5f7f9; border: 1px solid #e3e7eb; border-radius: 6px; }
   </style>
@@ -33,14 +35,12 @@
   <label for="wednesdayHours">Wednesday Hours</label>
   <input type="number" id="wednesdayHours" min="0" step="0.1" value="1.5" required>
 
-  <label for="days">Select Tuition Days</label>
-  <select id="days" required>
-    <option value="6">Saturday Only</option>
-    <option value="0">Sunday Only</option>
-    <option value="3">Wednesday Only</option>
-    <option value="weekend">Saturday and Sunday</option>
-    <option value="all">Saturday, Sunday and Wednesday</option>
-  </select>
+  <label>Select Tuition Days</label>
+  <div class="checkbox-group">
+    <label><input type="checkbox" value="6" class="dayCheckbox"> Saturday</label>
+    <label><input type="checkbox" value="0" class="dayCheckbox"> Sunday</label>
+    <label><input type="checkbox" value="3" class="dayCheckbox"> Wednesday</label>
+  </div>
 
   <button id="calcBtn">Calculate</button>
 
@@ -51,36 +51,37 @@
 
   <script>
     function calcTuitionOneOff() {
-      // Inputs
       const startDateVal = document.getElementById('startDate').value;
       const monthlyFee = parseFloat(document.getElementById('monthlyFee').value || 0);
       const saturdayHours = parseFloat(document.getElementById('saturdayHours').value || 0);
       const sundayHours = parseFloat(document.getElementById('sundayHours').value || 0);
       const wednesdayHours = parseFloat(document.getElementById('wednesdayHours').value || 0);
-      const selectedDay = document.getElementById('days').value;
 
-      if (!startDateVal || !isFinite(monthlyFee)) return;
+      // Get selected days from checkboxes
+      const selectedDays = Array.from(document.querySelectorAll('.dayCheckbox:checked'))
+        .map(cb => cb.value);
+
+      if (!startDateVal || !isFinite(monthlyFee) || selectedDays.length === 0) {
+        alert("Please enter valid details and select at least one day.");
+        return;
+      }
 
       const startDate = new Date(startDateVal);
 
-      // Total weekly hours based on selection
+      // Calculate total weekly hours
       let totalWeeklyHours = 0;
-      if (selectedDay === '6') totalWeeklyHours = saturdayHours;
-      else if (selectedDay === '0') totalWeeklyHours = sundayHours;
-      else if (selectedDay === '3') totalWeeklyHours = wednesdayHours;
-      else if (selectedDay === 'weekend') totalWeeklyHours = saturdayHours + sundayHours;
-      else if (selectedDay === 'all') totalWeeklyHours = saturdayHours + sundayHours + wednesdayHours;
+      if (selectedDays.includes("6")) totalWeeklyHours += saturdayHours;
+      if (selectedDays.includes("0")) totalWeeklyHours += sundayHours;
+      if (selectedDays.includes("3")) totalWeeklyHours += wednesdayHours;
 
-      // Guard against divide-by-zero
       if (totalWeeklyHours <= 0) {
         alert('Total weekly hours is 0. Please check your hours and day selection.');
         return;
       }
 
-      // Hourly rate: monthly fee divided by 4 weeks then by total weekly hours
       const hourlyRate = monthlyFee / (totalWeeklyHours * 4);
 
-      // Date range: from start date to end of that month
+      // Loop from start date to end of month
       const year = startDate.getFullYear();
       const month = startDate.getMonth();
       const day = startDate.getDate();
@@ -91,28 +92,17 @@
 
       for (let d = day; d <= daysInMonth; d++) {
         const current = new Date(year, month, d);
-        const weekKey = current.getFullYear() + '-' + current.getMonth() + '-' + Math.floor((current.getDate() - 1) / 7); // coarse week id
+        const weekKey = current.getFullYear() + '-' + current.getMonth() + '-' + Math.floor((current.getDate() - 1) / 7);
 
-        if (selectedDay === '6' && current.getDay() === 6) {
-          tuitionOneOff += saturdayHours * hourlyRate;
+        if (selectedDays.includes(current.getDay().toString())) {
+          if (current.getDay() === 6) tuitionOneOff += saturdayHours * hourlyRate;
+          if (current.getDay() === 0) tuitionOneOff += sundayHours * hourlyRate;
+          if (current.getDay() === 3) tuitionOneOff += wednesdayHours * hourlyRate;
           weeksCharged.add(weekKey);
-        } else if (selectedDay === '0' && current.getDay() === 0) {
-          tuitionOneOff += sundayHours * hourlyRate;
-          weeksCharged.add(weekKey);
-        } else if (selectedDay === '3' && current.getDay() === 3) {
-          tuitionOneOff += wednesdayHours * hourlyRate;
-          weeksCharged.add(weekKey);
-        } else if (selectedDay === 'weekend') {
-          if (current.getDay() === 6) { tuitionOneOff += saturdayHours * hourlyRate; weeksCharged.add(weekKey); }
-          if (current.getDay() === 0) { tuitionOneOff += sundayHours * hourlyRate; weeksCharged.add(weekKey); }
-        } else if (selectedDay === 'all') {
-          if (current.getDay() === 6) { tuitionOneOff += saturdayHours * hourlyRate; weeksCharged.add(weekKey); }
-          if (current.getDay() === 0) { tuitionOneOff += sundayHours * hourlyRate; weeksCharged.add(weekKey); }
-          if (current.getDay() === 3) { tuitionOneOff += wednesdayHours * hourlyRate; weeksCharged.add(weekKey); }
         }
       }
 
-      // Show results
+      // Output
       document.getElementById('tuitionOneOff').textContent = tuitionOneOff.toFixed(2);
       document.getElementById('weeksCharged').textContent = weeksCharged.size;
       document.getElementById('results').style.display = 'block';
