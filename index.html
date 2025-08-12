@@ -1,66 +1,40 @@
-
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Tuition Fee Calculator Widget</title>
+  <meta charset="utf-8" />
+  <title>Tuition One-Off Fee (Minimal)</title>
   <script src="https://cdn.jotfor.ms/widgets/main.js"></script>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 10px;
+    body { font-family: Arial, sans-serif; padding: 10px; }
+    label { font-weight: bold; margin-top: 10px; display: block; }
+    input, select, button {
+      width: 100%; padding: 8px; margin: 5px 0 10px 0;
+      border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box;
     }
-    label {
-      font-weight: bold;
-      margin-top: 10px;
-      display: block;
-    }
-    input, select {
-      width: 100%;
-      padding: 8px;
-      margin: 5px 0 10px 0;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-    }
-    button {
-      padding: 10px 20px;
-      background: #2c3e50;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    .results {
-      margin-top: 20px;
-      padding: 10px;
-      border: 1px solid #ccc;
-      background: #f1f1f1;
-    }
+    button { background: #2c3e50; color: #fff; border: 0; cursor: pointer; }
+    .results { margin-top: 12px; padding: 10px; background: #f5f7f9; border: 1px solid #e3e7eb; border-radius: 6px; }
   </style>
 </head>
 <body>
-
-  <h3>Tuition Fee Calculator</h3>
+  <h3>Tuition One-Off Fee</h3>
 
   <label for="startDate">Start Date</label>
-  <input type="date" id="startDate">
+  <input type="date" id="startDate" required>
 
   <label for="monthlyFee">Monthly Fee (£)</label>
-  <input type="number" id="monthlyFee" value="100">
-
-  <label for="bookFee">Book Fee (£)</label>
-  <input type="number" id="bookFee" value="45">
+  <input type="number" id="monthlyFee" min="0" step="0.01" value="100" required>
 
   <label for="saturdayHours">Saturday Hours</label>
-  <input type="number" id="saturdayHours" step="0.1" value="2">
+  <input type="number" id="saturdayHours" min="0" step="0.1" value="2" required>
 
   <label for="sundayHours">Sunday Hours</label>
-  <input type="number" id="sundayHours" step="0.1" value="1">
+  <input type="number" id="sundayHours" min="0" step="0.1" value="1" required>
 
   <label for="wednesdayHours">Wednesday Hours</label>
-  <input type="number" id="wednesdayHours" step="0.1" value="1.5">
+  <input type="number" id="wednesdayHours" min="0" step="0.1" value="1.5" required>
 
   <label for="days">Select Tuition Days</label>
-  <select id="days">
+  <select id="days" required>
     <option value="6">Saturday Only</option>
     <option value="0">Sunday Only</option>
     <option value="3">Wednesday Only</option>
@@ -68,40 +42,28 @@
     <option value="all">Saturday, Sunday and Wednesday</option>
   </select>
 
-  <label for="studentName">Student Name</label>
-  <input type="text" id="studentName" placeholder="e.g., John Smith">
+  <button id="calcBtn">Calculate</button>
 
-  <label for="yearGroup">Year Group</label>
-  <input type="text" id="yearGroup" placeholder="e.g., Year 5">
-
-  <button onclick="calculate()">Calculate</button>
-
-  <div class="results" id="results" style="display: none;">
-    <h4>Results</h4>
+  <div class="results" id="results" style="display:none;">
     <p><strong>Tuition One-Off:</strong> £<span id="tuitionOneOff"></span></p>
-    <p><strong>Publication One-Off:</strong> £<span id="publicationOneOff"></span></p>
-    <p><strong>Tuition DD:</strong> £<span id="tuitionDD"></span></p>
-    <p><strong>Publication DD:</strong> £<span id="publicationDD"></span></p>
     <p><strong>Weeks Charged:</strong> <span id="weeksCharged"></span></p>
-    <h4>Payment Templates</h4>
-    <p><strong>First Tuition Payment:</strong> <span id="templateTuition1"></span></p>
-    <p><strong>First Content Payment:</strong> <span id="templateContent1"></span></p>
-    <p><strong>Tuition Subscription:</strong> <span id="templateSub1"></span></p>
-    <p><strong>Content Subscription:</strong> <span id="templateSub2"></span></p>
   </div>
 
   <script>
-    function calculate() {
-      const startDate = new Date(document.getElementById('startDate').value);
-      const monthlyFee = parseFloat(document.getElementById('monthlyFee').value);
-      const bookFee = parseFloat(document.getElementById('bookFee').value);
-      const saturdayHours = parseFloat(document.getElementById('saturdayHours').value);
-      const sundayHours = parseFloat(document.getElementById('sundayHours').value);
-      const wednesdayHours = parseFloat(document.getElementById('wednesdayHours').value);
+    function calcTuitionOneOff() {
+      // Inputs
+      const startDateVal = document.getElementById('startDate').value;
+      const monthlyFee = parseFloat(document.getElementById('monthlyFee').value || 0);
+      const saturdayHours = parseFloat(document.getElementById('saturdayHours').value || 0);
+      const sundayHours = parseFloat(document.getElementById('sundayHours').value || 0);
+      const wednesdayHours = parseFloat(document.getElementById('wednesdayHours').value || 0);
       const selectedDay = document.getElementById('days').value;
-      const studentName = document.getElementById('studentName').value;
-      const yearGroup = document.getElementById('yearGroup').value;
 
+      if (!startDateVal || !isFinite(monthlyFee)) return;
+
+      const startDate = new Date(startDateVal);
+
+      // Total weekly hours based on selection
       let totalWeeklyHours = 0;
       if (selectedDay === '6') totalWeeklyHours = saturdayHours;
       else if (selectedDay === '0') totalWeeklyHours = sundayHours;
@@ -109,71 +71,62 @@
       else if (selectedDay === 'weekend') totalWeeklyHours = saturdayHours + sundayHours;
       else if (selectedDay === 'all') totalWeeklyHours = saturdayHours + sundayHours + wednesdayHours;
 
-      const hourlyRate = (monthlyFee / (totalWeeklyHours * 4));
+      // Guard against divide-by-zero
+      if (totalWeeklyHours <= 0) {
+        alert('Total weekly hours is 0. Please check your hours and day selection.');
+        return;
+      }
+
+      // Hourly rate: monthly fee divided by 4 weeks then by total weekly hours
+      const hourlyRate = monthlyFee / (totalWeeklyHours * 4);
+
+      // Date range: from start date to end of that month
       const year = startDate.getFullYear();
       const month = startDate.getMonth();
       const day = startDate.getDate();
-      const totalDays = new Date(year, month + 1, 0).getDate();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
 
       let tuitionOneOff = 0;
-      let weeksCharged = new Set();
+      const weeksCharged = new Set();
 
-      for (let d = day; d <= totalDays; d++) {
+      for (let d = day; d <= daysInMonth; d++) {
         const current = new Date(year, month, d);
-        const week = current.getDate() - current.getDay();
+        const weekKey = current.getFullYear() + '-' + current.getMonth() + '-' + Math.floor((current.getDate() - 1) / 7); // coarse week id
+
         if (selectedDay === '6' && current.getDay() === 6) {
           tuitionOneOff += saturdayHours * hourlyRate;
-          weeksCharged.add(week);
+          weeksCharged.add(weekKey);
         } else if (selectedDay === '0' && current.getDay() === 0) {
           tuitionOneOff += sundayHours * hourlyRate;
-          weeksCharged.add(week);
+          weeksCharged.add(weekKey);
         } else if (selectedDay === '3' && current.getDay() === 3) {
           tuitionOneOff += wednesdayHours * hourlyRate;
-          weeksCharged.add(week);
+          weeksCharged.add(weekKey);
         } else if (selectedDay === 'weekend') {
-          if (current.getDay() === 6) { tuitionOneOff += saturdayHours * hourlyRate; weeksCharged.add(week); }
-          if (current.getDay() === 0) { tuitionOneOff += sundayHours * hourlyRate; weeksCharged.add(week); }
+          if (current.getDay() === 6) { tuitionOneOff += saturdayHours * hourlyRate; weeksCharged.add(weekKey); }
+          if (current.getDay() === 0) { tuitionOneOff += sundayHours * hourlyRate; weeksCharged.add(weekKey); }
         } else if (selectedDay === 'all') {
-          if (current.getDay() === 6) { tuitionOneOff += saturdayHours * hourlyRate; weeksCharged.add(week); }
-          if (current.getDay() === 0) { tuitionOneOff += sundayHours * hourlyRate; weeksCharged.add(week); }
-          if (current.getDay() === 3) { tuitionOneOff += wednesdayHours * hourlyRate; weeksCharged.add(week); }
+          if (current.getDay() === 6) { tuitionOneOff += saturdayHours * hourlyRate; weeksCharged.add(weekKey); }
+          if (current.getDay() === 0) { tuitionOneOff += sundayHours * hourlyRate; weeksCharged.add(weekKey); }
+          if (current.getDay() === 3) { tuitionOneOff += wednesdayHours * hourlyRate; weeksCharged.add(weekKey); }
         }
       }
 
-      const tuitionDD = monthlyFee * 0.6;
-      const publicationDD = monthlyFee * 0.4;
-
-      const templateTuition1 = `Month - ${weeksCharged.size} Weeks - ${studentName} - ${yearGroup} - MES - £${tuitionOneOff.toFixed(2)} - discounted`;
-      const templateContent1 = `Course Deposit - Book Payment - £${bookFee.toFixed(2)} - MES - discounted`;
-      const templateSub1 = `4 weeks Rolling - £${tuitionDD.toFixed(2)} - ${studentName} - ${yearGroup} - MES`;
-      const templateSub2 = `4 weeks Rolling - £${publicationDD.toFixed(2)} - Access - ${studentName} - ${yearGroup} - MES`;
-
-      document.getElementById('tuitionOneOff').innerText = tuitionOneOff.toFixed(2);
-      document.getElementById('publicationOneOff').innerText = bookFee.toFixed(2);
-      document.getElementById('tuitionDD').innerText = tuitionDD.toFixed(2);
-      document.getElementById('publicationDD').innerText = publicationDD.toFixed(2);
-      document.getElementById('weeksCharged').innerText = weeksCharged.size;
-
-      document.getElementById('templateTuition1').innerText = templateTuition1;
-      document.getElementById('templateContent1').innerText = templateContent1;
-      document.getElementById('templateSub1').innerText = templateSub1;
-      document.getElementById('templateSub2').innerText = templateSub2;
-
+      // Show results
+      document.getElementById('tuitionOneOff').textContent = tuitionOneOff.toFixed(2);
+      document.getElementById('weeksCharged').textContent = weeksCharged.size;
       document.getElementById('results').style.display = 'block';
 
-      // Send data back to Jotform
-      JFCustomWidget.sendData({
-        tuitionOneOff: tuitionOneOff.toFixed(2),
-        publicationOneOff: bookFee.toFixed(2),
-        tuitionDD: tuitionDD.toFixed(2),
-        publicationDD: publicationDD.toFixed(2),
-        weeksCharged: weeksCharged.size,
-        firstTuitionPayment: templateTuition1,
-        firstContentPayment: templateContent1,
-        tuitionSubscription: templateSub1,
-        contentSubscription: templateSub2
-      });
+      // Send to Jotform
+      if (typeof JFCustomWidget !== 'undefined') {
+        JFCustomWidget.sendData({
+          tuitionOneOff: tuitionOneOff.toFixed(2),
+          weeksCharged: weeksCharged.size
+        });
+      }
     }
+
+    document.getElementById('calcBtn').addEventListener('click', calcTuitionOneOff);
   </script>
 </body>
 </html>
