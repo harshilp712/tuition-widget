@@ -16,6 +16,7 @@
     button { background: #2c3e50; color: #fff; border: 0; cursor: pointer; }
     .results { margin-top: 12px; padding: 10px; background: #f5f7f9; border: 1px solid #e3e7eb; border-radius: 6px; }
     .hidden { display: none; }
+    .note { margin-top: 15px; font-style: italic; color: #555; }
   </style>
 </head>
 <body>
@@ -55,6 +56,8 @@
     <p><strong>Tuition One-Off:</strong> £<span id="tuitionOneOff"></span></p>
     <p><strong>Weeks Charged:</strong> <span id="weeksCharged"></span></p>
   </div>
+
+  <p class="note">Please copy and paste the Tuition One Off Amount into the Jotform Field</p>
 
   <script>
     function updateHoursVisibility() {
@@ -100,7 +103,6 @@
 
       const startDate = new Date(startDateVal);
 
-      // Total weekly hours only from selected days
       let totalWeeklyHours = 0;
       if (selectedDays.includes('6')) totalWeeklyHours += saturdayHours;
       if (selectedDays.includes('0')) totalWeeklyHours += sundayHours;
@@ -113,7 +115,6 @@
 
       const hourlyRate = monthlyFee / (totalWeeklyHours * 4);
 
-      // Loop from start date to end of month
       const year = startDate.getFullYear();
       const month = startDate.getMonth();
       const day = startDate.getDate();
@@ -134,12 +135,10 @@
         }
       }
 
-      // Output
       document.getElementById('tuitionOneOff').textContent = tuitionOneOff.toFixed(2);
       document.getElementById('weeksCharged').textContent = weeksCharged.size;
       document.getElementById('results').style.display = 'block';
 
-      // Send to Jotform
       if (typeof JFCustomWidget !== 'undefined') {
         JFCustomWidget.sendData({
           tuitionOneOff: tuitionOneOff.toFixed(2),
@@ -148,7 +147,6 @@
       }
     }
 
-    // Wire up listeners
     document.getElementById('calcBtn').addEventListener('click', calcTuitionOneOff);
     document.getElementById('dayCheckboxes').addEventListener('change', updateHoursVisibility);
     document.addEventListener('DOMContentLoaded', updateHoursVisibility);
