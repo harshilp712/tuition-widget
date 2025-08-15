@@ -3,7 +3,6 @@
 <head>
   <meta charset="utf-8" />
   <title>Tuition One-Off Fee (Checkbox Days)</title>
-  <script src="https://cdn.jotfor.ms/widgets/main.js"></script>
   <style>
     body { font-family: Arial, sans-serif; padding: 10px; }
     label { font-weight: bold; margin-top: 10px; display: block; }
@@ -57,9 +56,12 @@
     <p><strong>Weeks Charged:</strong> <span id="weeksCharged"></span></p>
   </div>
 
-
-
+  <!-- >>> Use the Widget SDK (not main.js) -->
+  <script src="https://js.jotform.com/JotFormCustomWidget.min.js"></script>
   <script>
+    // Keep last result for the widget lifecycle
+    window._latestResult = {};
+
     function updateHoursVisibility() {
       const satChecked = document.querySelector('.dayCheckbox[value="6"]').checked;
       const sunChecked = document.querySelector('.dayCheckbox[value="0"]').checked;
@@ -139,18 +141,39 @@
       document.getElementById('weeksCharged').textContent = weeksCharged.size;
       document.getElementById('results').style.display = 'block';
 
-      if (typeof JFCustomWidget !== 'undefined') {
-        JFCustomWidget.sendData({
-          tuitionOneOff: tuitionOneOff.toFixed(2),
-          weeksCharged: weeksCharged.size
-        });
-      }
+      // Save for Jotform (even if you don't actually use it)
+      window._latestResult = {
+        tuitionOneOff: tuitionOneOff.toFixed(2),
+        weeksCharged: weeksCharged.size
+      };
     }
 
+    // UI events
     document.getElementById('calcBtn').addEventListener('click', calcTuitionOneOff);
     document.getElementById('dayCheckboxes').addEventListener('change', updateHoursVisibility);
     document.addEventListener('DOMContentLoaded', updateHoursVisibility);
+
+    // ---------- Jotform Widget lifecycle (the crucial part) ----------
+    function resize() {
+      const h = document.documentElement.scrollHeight || document.body.scrollHeight || 300;
+      JFCustomWidget.setHeight(h);
+    }
+    // Keep height in sync
+    try { new ResizeObserver(resize).observe(document.body); } catch (e) {}
+
+    // Fire when the widget iframe is ready
+    JFCustomWidget.subscribe("ready", resize);
+
+    // If the widget is required, tell Jotform it's valid (and provide a value)
+    JFCustomWidget.subscribe("validate", function () {
+      JFCustomWidget.sendSubmit({ valid: true, value: JSON.stringify(window._latestResult || {}) });
+    });
+
+    // On form submit, return something so the parent can finalize
+    JFCustomWidget.subscribe("submit", function () {
+      JFCustomWidget.sendSubmit({ value: JSON.stringify(window._latestResult || {}) });
+    });
+    // ---------------------------------------------------------------
   </script>
 </body>
 </html>
-
